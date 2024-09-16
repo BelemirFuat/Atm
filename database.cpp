@@ -12,56 +12,92 @@ void handle_client(int client_socket)
     int valread;
     while ((valread = read(client_socket, buffer, 1024)) > 0)
     {
-        std::cout << "From client " << client_socket << " : " << buffer << std::endl;
         buffer[valread] = '\0';
+        std::cout << "From client " << client_socket << " : " << buffer << std::endl;
         std::string str(buffer);
         std::vector<std::string> cmd = splitString(str, ' ');
+
         if (cmd[0] == "quit")
             break;
         else if (cmd[0] == "query")
         {
+            if (cmd.size() < 3)
+            {
+                std::string reply = "400: Bad request. Missing parameters.";
+                send(client_socket, reply.c_str(), reply.size(), 0);
+                continue;
+            }
+
             std::string userNameQ = cmd[1];
             std::string PINQ = cmd[2];
 
             unsigned long long hash = stringToUniqueNumber(userNameQ);
             std::string fileName = std::to_string(hash);
             std::stringstream filePath;
-            filePath << "database/"<<fileName<<".txt";
+            filePath << "database/" << fileName << ".txt";
             std::fstream userFile(filePath.str(), std::ios::in);
             if (!userFile.is_open())
             {
-                std::string reply = "401: There is no user with given user name. please try again.";
-                std::cout<<reply<<" "<<filePath.str()<<std::endl;
-                send(client_socket, reply.c_str(), sizeof(reply), 0);
+                std::string reply = "401: There is no user with given user name. Please try again.";
+                std::cout << reply << " " << filePath.str() << std::endl;
+                send(client_socket, reply.c_str(), reply.size(), 0);
+                logMessage("Unsuccessful login attempt for " + userNameQ + " from IP: " + getIPAdress(client_socket), databaseFileName);
             }
             else
             {
                 std::string line;
                 std::getline(userFile, line);
+                std::getline(userFile, line);
                 std::vector<std::string> lineParsed = splitString(line, ':');
-                std::string dePin = decrypt(PINQ, userNameQ);
+                std::string dePin = decrypt(PINQ, userNameQ); 
                 if (lineParsed[1] == dePin)
                 {
-                    std::string reply = "200: Login successfull. Welcome.";
-                    logMessage("Successful login for " + userNameQ, databaseFileName);
+                    std::string reply = "200: Login successful. Welcome.";
+                    send(client_socket, reply.c_str(), reply.size(), 0);
+                    logMessage("Successful login for " + userNameQ + " from IP: " + getIPAdress(client_socket), databaseFileName);
                 }
                 else
                 {
                     std::string reply = "401: Wrong PIN or User Name. Please try again.";
-                    send(client_socket, reply.c_str(), sizeof(reply), 0);
-                    logMessage("Unsuccessful login attempt for " + userNameQ, databaseFileName);
+                    send(client_socket, reply.c_str(), reply.size(), 0);
+                    logMessage("Unsuccessful login attempt for " + userNameQ + " from IP: " + getIPAdress(client_socket), databaseFileName);
                 }
             }
         }
         else if (cmd[0] == "addUser")
         {
-            std::fstream userFile("database/" + cmd[1] + ".txt", std::ios::out);
+            if (cmd.size() < 3)
+            {
+                std::string reply = "400: Bad request. Missing parameters.";
+                send(client_socket, reply.c_str(), reply.size(), 0);
+                continue;
+            }
+
+            std::string userName = cmd[1];
+            std::string PIN = cmd[2];
+
+            unsigned long long hash = stringToUniqueNumber(userName);
+            std::string fileName = std::to_string(hash);
+            std::stringstream filePath;
+            filePath << "database/" << fileName << ".txt";
+
+            std::fstream userFile(filePath.str(), std::ios::out);
             if (!userFile.is_open())
             {
-                std::string reply = "There's a problem with file system. please try again later";
-                std::cout << "There's a problem with file system. Attention needed";
-                logMessage("There'a a problem with file system. Attention needed", databaseFileName);
-                send(client_socket, reply.c_str(), sizeof(reply), 0);
+                std::string reply = "500: There's a problem with the file system. Please try again later.";
+                std::cout << reply << std::endl;
+                logMessage("There'a a problem with the file system. Attention needed", databaseFileName);
+                send(client_socket, reply.c_str(), reply.size(), 0);
+            }
+            else
+            {
+                // Encrypt PIN before storing
+                std::string encryptedPIN = decrypt(PIN, userName);
+                userFile << userName << ":" << encryptedPIN << std::endl;
+                userFile.close();
+                std::string reply = "200: User added successfully.";
+                send(client_socket, reply.c_str(), reply.size(), 0);
+                logMessage("User added: " + userName, databaseFileName);
             }
         }
         else if (cmd[0] == "shutdown")
@@ -70,11 +106,16 @@ void handle_client(int client_socket)
         }
         else if (cmd[0] == "deleteUser")
         {
+            // Implement delete user functionality
         }
         else if (cmd[0] == "infoUser")
         {
+            // Implement info user functionality
         }
+        for(int i = 0; i<sizeof(buffer)/sizeof(char);i++ )
+            buffer[i] = 0;
     }
+
     std::lock_guard<std::mutex> lock(mtx);
     clients.erase(std::remove(clients.begin(), clients.end(), client_socket), clients.end());
     close(client_socket);
