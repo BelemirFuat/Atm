@@ -13,9 +13,9 @@
 - actually securityServer doesn't anything. 
 
 ## TODO :
-[] Succesfully login.
-[] Succesfully logout.
-[] Succesfully access the database from atmClient side.
-[] Succesfully Make transactions
-[] Succesfully write data into database
+[ ] Succesfully login.
+[ ] Succesfully logout.
+[ ] Succesfully access the database from atmClient side.
+[ ] Succesfully Make transactions
+[ ] Succesfully write data into database
 ...
