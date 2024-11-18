@@ -13,12 +13,11 @@
 - actually securityServer doesn't anything. 
 
 ## TODO :
-[ ] Succesfully login.
-[ ] Succesfully logout.
-[ ] Succesfully access the database from atmClient side.
-[ ] Succesfully Make transactions
-[ ] Succesfully write data into database
-...
+- [ ] Succesfully login.
+- [ ] Succesfully logout.
+- [ ] Succesfully access the database from atmClient side.
+- [ ] Succesfully Make transactions
+- [ ] Succesfully write data into database
 
 ## tecnic features
 ### FEATURES
@@ -37,7 +36,7 @@
 
 ---
 
-###DATABASE AND SERVER COM
+### DATABASE AND SERVER COM
 1. userName and pin DATABASE -> SERVER
 
 ---
